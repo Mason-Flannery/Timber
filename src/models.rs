@@ -2,8 +2,8 @@
 pub struct Session {
     pub id: i32,
     pub client_id: i32,
-    pub start_timestamp: String, // stored in RFC339
-    pub elapsed_seconds: i64,
+    pub start_timestamp: String,       // stored in RFC339
+    pub end_timestamp: Option<String>, // stored in RFC339
     pub note: Option<String>,
 }
 
