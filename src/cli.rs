@@ -1,4 +1,4 @@
-use clap::{value_parser, Parser, Subcommand};
+use clap::{value_parser, Args, Parser, Subcommand};
 
 use crate::models::Session;
 
@@ -19,6 +19,19 @@ pub enum UserInput {
     ByName(String),
     ById(i32)
 }
+#[derive(Subcommand)]
+pub enum ClientOptions {
+    Add {
+        name: String,
+        #[arg(short, long)]
+        note: Option<String>,
+    },
+    Remove {
+        #[arg(value_parser = parse_input)]
+        input: UserInput,
+    },
+    List,
+}
 
 fn parse_input(s: &str) -> Result<UserInput, String> {
     if let Ok(id) = s.parse::<i32>() {
@@ -29,30 +42,28 @@ fn parse_input(s: &str) -> Result<UserInput, String> {
 }
 
 #[derive(Subcommand)]
-pub enum Commands {
-    AddClient {
-        name: String,
-        #[arg(short, long)]
-        note: Option<String>,
-    },
-    RemoveClient {
-        #[arg(value_parser = parse_input)]
-        input: UserInput,
-    },
-    ListClients,
-    StartSession {
+pub enum SessionOptions {
+    Start {
         #[arg(value_parser = parse_input)]
         input: UserInput,
         note: Option<String>,
     },
-    EndSession,
-    RemoveSession {
+    End,
+    Remove {
         id: i32,
     },
-    ListSessions {
+    List {
         #[arg(short, long)]
         #[arg(value_parser = parse_input)]
         client: Option<UserInput>,
     },
-    ActiveSession,
+    Current,
+}
+
+#[derive(Subcommand)]
+pub enum Commands {
+    #[command(subcommand, alias = "project", about = "Manage clients (alias: project)")]
+    Client(ClientOptions),
+    #[command(subcommand, about = "Manage sessions")]
+    Session(SessionOptions)
 }
