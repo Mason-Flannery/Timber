@@ -19,4 +19,8 @@ Total: 4h 45m
 * Implement target hour allocation for a specific client:
     'You worked 7.5 hours for Jane today.
     This month: 32.5 / 40 hours (81.25%)'
+
+Jane: 32.5 / 40.0 hours (81.25%)
+Bob: 45.0 / 40.0 hours (112.5%) ✅
+Alice: 12.0 hours (no target)
 */
