@@ -47,6 +47,7 @@ pub enum SessionOptions {
         input: UserInput,
         note: Option<String>,
     },
+    #[command(alias = "stop", about="End the session tracking (alias: stop)")]
     End,
     Remove {
         id: i32,
