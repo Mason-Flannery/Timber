@@ -65,5 +65,11 @@ pub enum Commands {
     #[command(subcommand, alias = "project", about = "Manage clients (alias: project)")]
     Client(ClientOptions),
     #[command(subcommand, about = "Manage sessions")]
-    Session(SessionOptions)
+    Session(SessionOptions),
+    Summary {
+        #[arg(short, long)]
+        daily: bool,
+        weekly: bool,
+        monthly: bool
+    },
 }

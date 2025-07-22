@@ -1,11 +1,14 @@
-use chrono::Utc;
+use std::{collections::HashMap};
+
+use chrono::{Datelike, TimeZone, Utc};
 use clap::Parser;
 use cli::{Cli, Commands};
 
-use crate::{cli::{ClientOptions, SessionOptions, UserInput}, models::{Client, Session}};
+use crate::{cli::{ClientOptions, SessionOptions}, models::{Client, Session}};
 mod cli;
 mod db;
 mod models;
+mod utils;
 
 fn main() {
     let conn = db::init_db(); // make sure the database exists
@@ -171,5 +174,41 @@ fn main() {
                 }
             }
         }
+        Commands::Summary { daily, weekly, monthly } => {
+            if daily {
+                let now = chrono::Local::now();
+                let start = chrono::Local.with_ymd_and_hms(now.year(), now.month(), now.day(), 0, 0,0).unwrap(); // Get time at start of day
+                let end = start + chrono::Duration::days(1); // Get time at end of day
+
+                let results = db::get_sessions_within_range(&conn, &start.to_rfc3339(), &end.to_rfc3339()).expect("An error occurred while fetching the daily sessions");
+
+                let mut client_totals: HashMap<i32, i64> = HashMap::new();
+                for result in results {
+                    // println!("{}, {}, {}", result.clien)
+                    
+                    if client_totals.contains_key(&result.client_id) {
+                        match result.get_timedelta() {
+                            Some(delta) => client_totals.insert(result.client_id, client_totals.get(&result.client_id).unwrap() + delta.num_minutes()),
+                            None => continue,
+                        };
+                    }
+                    else {
+                        match result.get_timedelta() {
+                            Some(delta) => client_totals.insert(result.client_id, delta.num_minutes()),
+                            None => continue,
+                        };
+                    }
+                }
+                client_totals.iter().for_each(|(&key, &value)| {
+                    println!("{}: {:?}", db::get_client_by_id(&conn, key).unwrap().name, utils::split_minutes(value as u32))
+                });
+            }
+            if weekly {
+                println!("Weekly summaries are not yet implemented!");
+            }
+            if monthly {
+                println!("Monthly summaries are not yet implemented!")
+            }
+        },
     }
 }

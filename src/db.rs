@@ -186,16 +186,8 @@ pub fn end_session(conn: &Connection) -> Result<Option<TimeDelta>, rusqlite::Err
         Ok(Some(mut session)) => {
             session.end_timestamp = Some(Utc::now().to_rfc3339());
             let _ = commit_session_changes(&conn, &session);
-            let start: DateTime<Utc> = session
-                .start_timestamp
-                .parse()
-                .expect("Invalid start timestamp");
-            let end: DateTime<Utc> = session
-                .end_timestamp
-                .unwrap()
-                .parse()
-                .expect("Invalid end timestamp");
-            Ok(Some(end - start))
+            let delta = session.get_timedelta();
+            Ok(delta)
         }
         Ok(None) => Ok(None),
         Err(err) => Err(err),
@@ -230,6 +222,27 @@ fn commit_client_changes(conn: &Connection, client: &Client) -> Result<(), rusql
         Ok(_) => Ok(()),
         Err(err) => Err(err),
     }
+}
+
+pub fn get_sessions_within_range(conn: &Connection, start: &str, end: &str) -> Result<Vec<Session>, rusqlite::Error> {
+    let mut stmt = conn.prepare(
+        "SELECT id, client_id, start_timestamp, end_timestamp, note
+         FROM sessions
+         WHERE start_timestamp >= ?1 AND start_timestamp <= ?2
+         ORDER BY start_timestamp ASC"
+    )?;
+
+    let sessions = stmt.query_map([start, end], |row| {
+        Ok(Session {
+            id: row.get(0)?,
+            client_id: row.get(1)?,
+            start_timestamp: row.get(2)?,
+            end_timestamp: row.get(3)?,
+            note: row.get(4)?,
+        })
+    })?.collect::<Result<Vec<_>>>()?;
+
+    Ok(sessions)
 }
 
 // TESTS
