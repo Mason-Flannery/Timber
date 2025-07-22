@@ -224,7 +224,7 @@ fn commit_client_changes(conn: &Connection, client: &Client) -> Result<(), rusql
     }
 }
 
-pub fn get_sessions_within_range(conn: &Connection, start: &str, end: &str) -> Result<Vec<Session>, rusqlite::Error> {
+pub fn get_sessions_within_range(conn: &Connection, start: &DateTime<Utc>, end: &DateTime<Utc>) -> Result<Vec<Session>, rusqlite::Error> {
     let mut stmt = conn.prepare(
         "SELECT id, client_id, start_timestamp, end_timestamp, note
          FROM sessions
@@ -232,7 +232,7 @@ pub fn get_sessions_within_range(conn: &Connection, start: &str, end: &str) -> R
          ORDER BY start_timestamp ASC"
     )?;
 
-    let sessions = stmt.query_map([start, end], |row| {
+    let sessions = stmt.query_map([start.to_rfc3339(), end.to_rfc3339()], |row| {
         Ok(Session {
             id: row.get(0)?,
             client_id: row.get(1)?,

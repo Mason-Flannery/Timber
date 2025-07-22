@@ -1,6 +1,5 @@
-use clap::{value_parser, Args, Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 
-use crate::models::Session;
 
 #[derive(Parser)]
 #[command(
@@ -60,6 +59,13 @@ pub enum SessionOptions {
     Current,
 }
 
+#[derive(ValueEnum, Clone, Debug)]
+pub enum SummaryRange {
+    Daily,
+    Weekly,
+    Monthly,
+}
+
 #[derive(Subcommand)]
 pub enum Commands {
     #[command(subcommand, alias = "project", about = "Manage clients (alias: project)")]
@@ -67,9 +73,7 @@ pub enum Commands {
     #[command(subcommand, about = "Manage sessions")]
     Session(SessionOptions),
     Summary {
-        #[arg(short, long)]
-        daily: bool,
-        weekly: bool,
-        monthly: bool
+        #[arg(value_enum)]
+        range: SummaryRange,
     },
 }
