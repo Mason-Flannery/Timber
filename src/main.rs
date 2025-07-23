@@ -50,6 +50,10 @@ fn main() {
                         ClientOptions::List => {
                         let client_list =
                             db::list_clients(&conn).expect("Error encountered getting client list");
+                        if client_list.len() == 0 {
+                            println!("No clients to display!");
+                            return;
+                        }
                         println!("Clients (Name, Id):");
                         for client in client_list {
                             println!("({}, {})", client.name, client.id);
