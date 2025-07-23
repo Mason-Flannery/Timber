@@ -9,3 +9,8 @@ clap = { version = "4.5.41", features = ["derive"] }
 platform-dirs = "0.3.0"
 rusqlite = { version = "0.37.0", features = ["bundled"] }
 time = "0.3.41"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
