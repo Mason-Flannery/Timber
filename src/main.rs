@@ -45,7 +45,11 @@ fn main() {
         
                                 match db::remove_client(&conn, client_id) {
                                     Ok(_) => println!("Successfully removed client {}", client_id),
-                                    Err(_) => println!("Failed to remove client {}", client_id),
+                                    Err(rusqlite::Error::SqliteFailure(_err, _)) => {
+                                        println!("This client is referenced in some of your sessions! Removal is not yet supported.");
+                                        return;
+                                    },
+                                    Err(e) => println!("Failed to remove client {}, {}", client_id, e),
                                 };
                             }
                             ClientOptions::List => {
@@ -128,7 +132,7 @@ fn main() {
                     SessionOptions::Current => {
                         match db::get_active_session(&conn) {
                             Ok(Some(session)) => {
-                                let client = match db::get_client_by_id(&conn, session.id.clone()) {
+                                let client = match db::get_client_by_id(&conn, session.client_id.clone()) {
                                     Ok(client) => client.name,
                                     Err(_) => "Unknown".to_string(),
                                 };
@@ -230,7 +234,7 @@ fn start_session(conn: &Connection, input: UserInput, note:Option<String>) {
                         note,
                     },
                 ) {
-                    Ok(id) => println!("Started logging session {}", id),
+                    Ok(id) => println!("Started logging session {} for {}", id, db::get_client_by_id(&conn, client_id).unwrap().name),
                     Err(_) => println!("An error occured while trying to start a new session"),
                 }
             }
