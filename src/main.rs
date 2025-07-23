@@ -140,6 +140,10 @@ fn main() {
                             .expect("Error encountered getting session list"),
                         None => db::list_sessions(&conn, None).expect("Error encountered getting session list"), // Swap to other func
                     };
+                    if session_list.len() == 0 {
+                        println!("No sessions to display!");
+                        return;
+                    }
                     for session in session_list {
                         let client = db::get_client_by_id(&conn, session.client_id)
                                 .expect("The client must exist");
