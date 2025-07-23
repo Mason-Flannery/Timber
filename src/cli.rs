@@ -20,15 +20,18 @@ pub enum UserInput {
 }
 #[derive(Subcommand)]
 pub enum ClientOptions {
+    #[command(about="Add a new client")]
     Add {
         name: String,
         #[arg(short, long)]
         note: Option<String>,
     },
+    #[command(alias = "rm", about="Remove the client with the provided id or name (alias: rm)")]
     Remove {
         #[arg(value_parser = parse_input)]
         input: UserInput,
     },
+    #[command(alias = "ls", about="List all clients (alias: ls)")]
     List,
 }
 
@@ -42,6 +45,7 @@ fn parse_input(s: &str) -> Result<UserInput, String> {
 
 #[derive(Subcommand)]
 pub enum SessionOptions {
+    #[command(alias = "new", about="Start a new time-tracking session (alias: new)")]
     Start {
         #[arg(value_parser = parse_input)]
         input: UserInput,
@@ -49,14 +53,17 @@ pub enum SessionOptions {
     },
     #[command(alias = "stop", about="End the session tracking (alias: stop)")]
     End,
+    #[command(alias = "rm", about="Remove the session with the provided id (alias: rm)")]
     Remove {
         id: i32,
     },
+    #[command(alias = "ls", about="List all sessions, optionally specify a specific client (alias: ls)")]
     List {
         #[arg(short, long)]
         #[arg(value_parser = parse_input)]
         client: Option<UserInput>,
     },
+    #[command(alias = "show", about="Display the current working session (alias: show)")]
     Current,
 }
 
@@ -73,6 +80,7 @@ pub enum Commands {
     Client(ClientOptions),
     #[command(subcommand, about = "Manage sessions")]
     Session(SessionOptions),
+    #[command(about="Display a formatted job summary of worked time")]
     Summary {
         #[arg(value_enum)]
         range: SummaryRange,
