@@ -1,10 +1,16 @@
+use std::fs;
+
 use chrono::{DateTime, TimeDelta, Utc};
 use rusqlite::{params, Connection, OptionalExtension, Result};
 
 use crate::models::{Client, Session};
+use platform_dirs;
 
 pub fn init_db() -> Connection {
-    let conn = Connection::open("timber.db").expect("No issues");
+    let app_dirs = platform_dirs::AppDirs::new(Some("Timber"), true).expect("Failed to get directories");
+    let db_dir = app_dirs.data_dir;
+    fs::create_dir_all(&db_dir).expect("Failed to create data directory"); // Create the database directory in appdata if it doesn't exist
+    let conn = Connection::open(db_dir.join("timber.db")).expect("Failed to open database");
     init_schema(&conn);
     conn // we assume conn is always valid here
 }
