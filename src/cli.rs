@@ -59,7 +59,6 @@ pub enum SessionOptions {
     },
     #[command(alias = "ls", about="List all sessions, optionally specify a specific client (alias: ls)")]
     List {
-        #[arg(short, long)]
         #[arg(value_parser = parse_input)]
         client: Option<UserInput>,
     },
