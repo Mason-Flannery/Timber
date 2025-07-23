@@ -134,7 +134,7 @@ pub fn get_client_by_id(conn: &Connection, id: i32) -> Result<Client, rusqlite::
         Ok(Client {
             id: row.get(0)?,
             name: row.get(1)?,
-            note: row.get::<_, Option<String>>(2)?,
+            note: row.get(2).ok(),
         })
     })
 }
@@ -144,7 +144,7 @@ pub fn get_client_id_by_name(conn: &Connection, name: String) -> Result<Option<i
 }
 
 pub fn remove_client(conn: &Connection, id: i32) -> Result<(), rusqlite::Error> {
-    conn.execute("DELETE FROM clients WHERE id == ?1", [id])?;
+    conn.execute("DELETE FROM clients WHERE id = ?1", [id])?;
     Ok(())
 }
 
