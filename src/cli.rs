@@ -84,4 +84,10 @@ pub enum Commands {
         #[arg(value_enum)]
         range: SummaryRange,
     },
+    #[command(about="End current session and switch to a different client / project")]
+    Switch {
+        #[arg(value_parser = parse_input)]
+        input: UserInput,
+        note: Option<String>,
+    }
 }
