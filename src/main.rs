@@ -114,11 +114,6 @@ fn main() {
                     let _ = db::remove_session(&conn, id);
                 }
                 SessionOptions::List {  client } => {
-                    // let client_id = match client {
-                    //     Some(UserInput::ById(id)) => id,
-                    //     Some(UserInput::ByName(name)) => match db::get_client_id_by_name(&conn, name),
-                    //     None => todo!(),
-                    // }
                     let client_id: Option<i32> = match client {
                         Some(cli::UserInput::ByName(name)) => {
                             match db::get_client_id_by_name(&conn, name) {
@@ -144,11 +139,22 @@ fn main() {
                     for session in session_list {
                         let client = db::get_client_by_id(&conn, session.client_id)
                                 .expect("The client must exist");
-                        println!(
-                            "{}:\n {}", // ! Why in the world is this broken???
-                            client.name,
-                            session.start_timestamp
-                        );
+                        match session.get_timedelta() {
+                            Some(delta) => {
+                                let (hours, minutes) = utils::split_minutes(delta.num_minutes() as u32);
+                                println!(
+                                    "{}:\n{}h {}m ({})", // ! Why in the world is this broken???
+                                    client.name,
+                                    hours,
+                                    minutes,
+                                    session.start_timestamp
+                                );
+                            },
+                            None => {
+                                println!("{}:\n {}", client.name, session.start_timestamp)
+                            },
+                        }
+                        
                         match session.note {
                             Some(note) => println!("-- {}", note),
                             None => (),
