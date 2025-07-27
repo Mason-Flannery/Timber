@@ -12,6 +12,8 @@ pub fn init_db() -> Connection {
     fs::create_dir_all(&db_dir).expect("Failed to create data directory"); // Create the database directory in appdata if it doesn't exist
     let conn = Connection::open(db_dir.join("timber.db")).expect("Failed to open database");
     init_schema(&conn);
+    apply_migrations(&conn).expect("Failed to apply migrations");
+
     conn // we assume conn is always valid here
 }
 
@@ -30,9 +32,48 @@ pub fn init_schema(conn: &Connection) {
             end_timestamp TEXT, 
             note TEXT,
             FOREIGN KEY (client_id) REFERENCES clients(id)
-        );",
+        );
+
+        CREATE TABLE IF NOT EXISTS meta (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
+
+        INSERT OR IGNORE INTO meta (key, value) VALUES ('schema_version', '1');",
     )
     .expect("Scema init failed");
+}
+
+fn get_schema_version(conn: &Connection) -> u32 {
+    conn.query_row(
+        "SELECT value FROM meta WHERE key = 'schema_version'",
+        [],
+        |row| {
+            let version_str: String = row.get(0)?;
+            Ok(version_str.parse::<u32>().unwrap_or(0))
+        },
+    )
+    .unwrap_or(0)
+}
+
+fn update_schema_version(conn: &Connection, new_version: u32) -> rusqlite::Result<()> {
+    conn.execute(
+        "UPDATE meta SET value = ?1 WHERE key = 'schema_version'",
+        [new_version.to_string()],
+    )?;
+    Ok(())
+}
+
+pub fn apply_migrations(conn: &Connection) -> rusqlite::Result<()> {
+    let mut version = get_schema_version(conn);
+
+    // if version < 2 {
+    //     // Example migration: add 'tag' column to sessions
+    //     conn.execute("ALTER TABLE sessions ADD COLUMN offset TEXT", [])?;
+    //     version = 2;
+    //     update_schema_version(conn, version)?;
+    // }
+    Ok(())
 }
 
 pub fn store_session(conn: &Connection, session: &Session) -> Result<i32, rusqlite::Error> {
