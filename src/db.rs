@@ -77,9 +77,9 @@ pub fn apply_migrations(conn: &Connection) -> rusqlite::Result<()> {
 }
 
 pub fn store_session(conn: &Connection, session: &Session) -> Result<i32, rusqlite::Error> {
-    let stmt = conn.execute(
-        "INSERT INTO sessions (client_id, start_timestamp, end_timestamp, note) VALUES (?1, ?2, ?3, ?4)",
-        params![session.client_id, session.start_timestamp, session.end_timestamp, session.note],
+    let _ = conn.execute(
+        "INSERT INTO sessions (client_id, start_timestamp, end_timestamp, note, offset_minutes) VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![session.client_id, session.start_timestamp, session.end_timestamp, session.note, session.offset_minutes],
     )?;
     Ok(conn.last_insert_rowid() as i32)
 }
@@ -118,7 +118,8 @@ pub fn list_sessions(
         client_id, 
         start_timestamp, 
         end_timestamp, 
-        note FROM sessions WHERE client_id = ?1 ORDER BY start_timestamp DESC",
+        note,
+        offset_minutes FROM sessions WHERE client_id = ?1 ORDER BY start_timestamp DESC",
         )?;
         let session_iter = stmt.query_map([id], |row| {
             Ok(Session {
@@ -130,14 +131,15 @@ pub fn list_sessions(
                 offset_minutes: row.get(5)?
             })
         })?;
-        return Ok(session_iter.collect::<Result<Vec<Session>, _>>()?);
+        Ok(session_iter.collect::<Result<Vec<Session>, _>>()?)
     } else {
         let mut stmt = conn.prepare(
             "SELECT id, 
         client_id, 
         start_timestamp, 
         end_timestamp, 
-        note FROM sessions ORDER BY start_timestamp DESC",
+        note,
+        offset_minutes FROM sessions ORDER BY start_timestamp DESC",
         )?;
 
         let session_iter = stmt.query_map([], |row| {
@@ -150,8 +152,8 @@ pub fn list_sessions(
                 offset_minutes: row.get(5)?
             })
         })?;
-        return Ok(session_iter.collect::<Result<Vec<Session>, _>>()?);
-    };
+        Ok(session_iter.collect::<Result<Vec<Session>, _>>()?)
+    }
 }
 
 pub fn store_client(conn: &Connection, client: &Client) -> Result<Option<i32>, rusqlite::Error> {
@@ -166,7 +168,7 @@ pub fn store_client(conn: &Connection, client: &Client) -> Result<Option<i32>, r
             println!("Client already exists! Insert ignored.");
             return Ok(Option::None)
         }
-        Err(e) => return Err(e.into()),
+        Err(e) => return Err(e),
     };
     Ok(Some(conn.last_insert_rowid() as i32)) // ! Do we want to return this if an error is encountered above?
 }
@@ -202,7 +204,7 @@ pub fn list_clients(conn: &Connection) -> Result<Vec<Client>, rusqlite::Error> {
             note: row.get::<_, Option<String>>(2)?,
         })
     })?;
-    Ok(clients_iter.collect::<Result<Vec<Client>, _>>()?)
+    clients_iter.collect::<Result<Vec<Client>, _>>()
 }
 
 pub fn get_active_session(conn: &Connection) -> Result<Option<Session>, rusqlite::Error> {
@@ -248,13 +250,14 @@ pub fn end_session(conn: &Connection) -> Result<Option<TimeDelta>, rusqlite::Err
 fn commit_session_changes(conn: &Connection, session: &Session) -> Result<(), rusqlite::Error> {
     match conn.execute(
         "UPDATE sessions
-        SET client_id=?1, start_timestamp=?2, end_timestamp=?3, note=?4
-        WHERE id=?5",
+        SET client_id=?1, start_timestamp=?2, end_timestamp=?3, note=?4, offset_minutes=?5
+        WHERE id=?6",
         params![
             session.client_id,
             session.start_timestamp,
             session.end_timestamp,
             session.note,
+            session.offset_minutes,
             session.id
         ],
     ) {
