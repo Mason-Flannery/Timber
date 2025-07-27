@@ -232,6 +232,7 @@ fn start_session(conn: &Connection, input: UserInput, note:Option<String>) {
                         start_timestamp: Utc::now().to_rfc3339(),
                         end_timestamp: Option::None,
                         note,
+                        offset_minutes: 0,
                     },
                 ) {
                     Ok(id) => println!("Started logging session {} for {}", id, db::get_client_by_id(&conn, client_id).unwrap().name),

@@ -67,12 +67,12 @@ fn update_schema_version(conn: &Connection, new_version: u32) -> rusqlite::Resul
 pub fn apply_migrations(conn: &Connection) -> rusqlite::Result<()> {
     let mut version = get_schema_version(conn);
 
-    // if version < 2 {
-    //     // Example migration: add 'tag' column to sessions
-    //     conn.execute("ALTER TABLE sessions ADD COLUMN offset TEXT", [])?;
-    //     version = 2;
-    //     update_schema_version(conn, version)?;
-    // }
+    if version < 2 {
+        // Example migration: add 'tag' column to sessions
+        conn.execute("ALTER TABLE sessions ADD COLUMN offset TEXT", [])?;
+        version = 2;
+        update_schema_version(conn, version)?;
+    }
     Ok(())
 }
 
@@ -94,6 +94,7 @@ pub fn get_session_by_id(conn: &Connection, id: i32) -> Result<Session, rusqlite
             start_timestamp: row.get(2)?,
             end_timestamp: row.get::<_, Option<String>>(3)?,
             note: row.get::<_, Option<String>>(4)?,
+            offset_minutes: row.get(5)?
         })
     })
 }
@@ -126,6 +127,7 @@ pub fn list_sessions(
                 start_timestamp: row.get(2)?,
                 end_timestamp: row.get(3)?,
                 note: row.get(4)?,
+                offset_minutes: row.get(5)?
             })
         })?;
         return Ok(session_iter.collect::<Result<Vec<Session>, _>>()?);
@@ -145,6 +147,7 @@ pub fn list_sessions(
                 start_timestamp: row.get(2)?,
                 end_timestamp: row.get(3)?,
                 note: row.get(4)?,
+                offset_minutes: row.get(5)?
             })
         })?;
         return Ok(session_iter.collect::<Result<Vec<Session>, _>>()?);
@@ -218,6 +221,7 @@ pub fn get_active_session(conn: &Connection) -> Result<Option<Session>, rusqlite
             start_timestamp: row.get(2)?,
             end_timestamp: None,
             note: row.get(4)?,
+            offset_minutes: row.get(5)?
         })
     });
 
@@ -286,6 +290,7 @@ pub fn get_sessions_within_range(conn: &Connection, start: &DateTime<Utc>, end: 
             start_timestamp: row.get(2)?,
             end_timestamp: row.get(3)?,
             note: row.get(4)?,
+            offset_minutes: row.get(5)?
         })
     })?.collect::<Result<Vec<_>>>()?;
 
@@ -371,6 +376,7 @@ fn insert_test_session(conn: &Connection) -> i32 {
         start_timestamp: Utc::now().to_rfc3339(),
         end_timestamp: Option::None,
         note: Option::Some("testing".to_string()),
+        offset_minutes: 5
     };
 
     store_session(&conn, &session).unwrap()
