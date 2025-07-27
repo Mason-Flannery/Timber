@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
 
-
 #[derive(Parser)]
 #[command(
     name = "timber",
@@ -8,7 +7,6 @@ use clap::{Parser, Subcommand, ValueEnum};
     author = "Mason",
     about = "A simple time tracker"
 )]
-
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -89,5 +87,10 @@ pub enum Commands {
         #[arg(value_parser = parse_input)]
         input: UserInput,
         note: Option<String>,
+    },
+    #[command(alias="fix", about="Add or remove time from the current session", allow_hyphen_values = true)]
+    Patch {
+        #[arg(short, long, help = "Minutes to adjust (positive or negative)")]
+        minutes: i32
     }
 }

@@ -1,6 +1,6 @@
 use std::fs;
 
-use chrono::{DateTime, TimeDelta, Utc};
+use chrono::{DateTime, Utc};
 use rusqlite::{params, Connection, OptionalExtension, Result};
 
 use crate::models::{Client, Session};
@@ -69,7 +69,7 @@ pub fn apply_migrations(conn: &Connection) -> rusqlite::Result<()> {
 
     if version < 2 {
         // Example migration: add 'tag' column to sessions
-        conn.execute("ALTER TABLE sessions ADD COLUMN offset TEXT", [])?;
+        conn.execute("ALTER TABLE sessions ADD COLUMN offset_minutes INTEGER NOT NULL", [])?;
         version = 2;
         update_schema_version(conn, version)?;
     }
@@ -85,7 +85,7 @@ pub fn store_session(conn: &Connection, session: &Session) -> Result<i32, rusqli
 }
 
 pub fn get_session_by_id(conn: &Connection, id: i32) -> Result<Session, rusqlite::Error> {
-    let mut stmt = conn.prepare("SELECT id, client_id, start_timestamp, end_timestamp, note FROM sessions WHERE id = ?1 LIMIT 1")?;
+    let mut stmt = conn.prepare("SELECT id, client_id, start_timestamp, end_timestamp, note, offset_minutes FROM sessions WHERE id = ?1 LIMIT 1")?;
 
     stmt.query_row(params![id], |row| {
         Ok(Session {
@@ -209,7 +209,7 @@ pub fn list_clients(conn: &Connection) -> Result<Vec<Client>, rusqlite::Error> {
 
 pub fn get_active_session(conn: &Connection) -> Result<Option<Session>, rusqlite::Error> {
     let mut stmt = conn.prepare(
-        "SELECT id, client_id, start_timestamp, end_timestamp, note
+        "SELECT id, client_id, start_timestamp, end_timestamp, note, offset_minutes
          FROM sessions
          WHERE end_timestamp IS NULL
          ORDER BY start_timestamp DESC
@@ -234,20 +234,8 @@ pub fn get_active_session(conn: &Connection) -> Result<Option<Session>, rusqlite
     }
 }
 
-pub fn end_session(conn: &Connection) -> Result<Option<TimeDelta>, rusqlite::Error> {
-    match get_active_session(&conn) {
-        Ok(Some(mut session)) => {
-            session.end_timestamp = Some(Utc::now().to_rfc3339());
-            let _ = commit_session_changes(&conn, &session);
-            let delta = session.get_timedelta();
-            Ok(delta)
-        }
-        Ok(None) => Ok(None),
-        Err(err) => Err(err),
-    }
-}
 
-fn commit_session_changes(conn: &Connection, session: &Session) -> Result<(), rusqlite::Error> {
+pub fn commit_session_changes(conn: &Connection, session: &Session) -> Result<(), rusqlite::Error> {
     match conn.execute(
         "UPDATE sessions
         SET client_id=?1, start_timestamp=?2, end_timestamp=?3, note=?4, offset_minutes=?5
@@ -266,7 +254,7 @@ fn commit_session_changes(conn: &Connection, session: &Session) -> Result<(), ru
     }
 }
 
-fn commit_client_changes(conn: &Connection, client: &Client) -> Result<(), rusqlite::Error> {
+pub fn commit_client_changes(conn: &Connection, client: &Client) -> Result<(), rusqlite::Error> {
     match conn.execute(
         "UPDATE clients
         SET id=?1, name=?2, note=?3
@@ -280,7 +268,7 @@ fn commit_client_changes(conn: &Connection, client: &Client) -> Result<(), rusql
 
 pub fn get_sessions_within_range(conn: &Connection, start: &DateTime<Utc>, end: &DateTime<Utc>) -> Result<Vec<Session>, rusqlite::Error> {
     let mut stmt = conn.prepare(
-        "SELECT id, client_id, start_timestamp, end_timestamp, note
+        "SELECT id, client_id, start_timestamp, end_timestamp, note, offset_minutes
          FROM sessions
          WHERE start_timestamp >= ?1 AND start_timestamp <= ?2
          ORDER BY start_timestamp ASC"
@@ -360,7 +348,7 @@ fn test_get_unfinished_session() {
 }
 
 fn insert_test_client(conn: &Connection) -> i32 {
-    init_schema(&conn); // maybe split schema creation into its own fn
+    init_schema(conn); // maybe split schema creation into its own fn
 
     let client = Client {
         id: 0,
@@ -368,11 +356,11 @@ fn insert_test_client(conn: &Connection) -> i32 {
         note: Some("test client".into()),
     };
 
-    store_client(&conn, &client).unwrap().expect("This is a test and should not fail")
+    store_client(conn, &client).unwrap().expect("This is a test and should not fail")
 }
 
 fn insert_test_session(conn: &Connection) -> i32 {
-    insert_test_client(&conn); // We need a client to insert a session
+    insert_test_client(conn); // We need a client to insert a session
     let session = Session {
         client_id: 1,
         id: 0,
