@@ -7,6 +7,7 @@ use rusqlite::Connection;
 
 use crate::{cli::{ClientOptions, SessionOptions, UserInput}, models::{Client, Session}};
 mod cli;
+mod views;
 mod db;
 mod models;
 mod utils;
@@ -102,38 +103,18 @@ fn main() {
                                 return;
                             }
                             for session in session_list {
-                                let client = db::get_client_by_id(&conn, session.client_id)
-                                        .expect("The client must exist");
-                                match session.get_timedelta() {
-                                    Some(delta) => {
-                                        let (hours, minutes) = utils::split_minutes(delta.num_minutes() as u32);
-                                        println!(
-                                            "{}:\n{}h {}m ({})", // ! Why in the world is this broken???
-                                            client.name,
-                                            hours,
-                                            minutes,
-                                            session.start_timestamp
-                                        );
-                                    },
-                                    None => {
-                                        println!("{}:\n {}", client.name, session.start_timestamp)
-                                    },
-                                }
-                        
-                                if let Some(note) = session.note { println!("-- {note}") }
-                                println!();
+                                let view = views::SessionView::from_session(&conn, session).expect("Error creating view of the session");
+                                println!("\n{view}");
+                    
                             }
                         }
             
                         SessionOptions::Current => {
                             match db::get_active_session(&conn) {
                                 Ok(Some(session)) => {
-                                    let client = match db::get_client_by_id(&conn, session.client_id) {
-                                        Ok(client) => client.name,
-                                        Err(_) => "Unknown".to_string(),
-                                    };
+                                    let view = views::SessionView::from_session(&conn, session).expect("Error creating view of the session");
 
-                                    println!("{}: {:?}\n Started at {} ", client, session.note, session.start_timestamp, )
+                                    println!("{view}");
                                 },
                                 Ok(None) => {
                                     println!("No active session found!")

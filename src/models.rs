@@ -14,8 +14,11 @@ impl Session {
             .start_timestamp
             .parse::<DateTime<Utc>>()
             .expect("Invalid start timestamp");
-        let end_str:&String = self.end_timestamp.as_ref()?;
-        let end = end_str.parse::<DateTime<Utc>>().ok()?;
+
+        let end = match &self.end_timestamp {
+            Some(end_str) => end_str.parse::<DateTime<Utc>>().ok()?,
+            None => Utc::now(),
+        };
         Some(end-start + Duration::minutes(self.offset_minutes.into()))
     }
 } 
