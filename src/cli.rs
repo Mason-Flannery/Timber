@@ -82,7 +82,7 @@ pub enum Commands {
     Session(SessionOptions),
     #[command(about="Display a formatted job summary of worked time", )]
     Summary {
-        #[arg(value_enum, help = "Time range for summary (daily, weekly, monthly)")]
+        #[arg(alias="sum", value_enum, help = "Time range for summary (daily, weekly, monthly)")]
         range: SummaryRange,
     },
     #[command(about="End current session and switch to a different client / project")]
