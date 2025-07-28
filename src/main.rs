@@ -152,6 +152,9 @@ fn main() {
                                 let (hours, minutes) = utils::split_minutes(value as u32);
                                 println!("{}:\n{}h {}m\n", db::get_client_by_id(&conn, key).unwrap().name, hours, minutes)
                             });
+                            let (hours, minutes) = utils::split_minutes(client_totals.values().sum::<i64>() as u32);
+                            println!("Total: {hours}h {minutes}m");
+                            
                         }
                         cli::SummaryRange::Weekly => {
                             let (start, end) = utils::current_week_range();
@@ -177,6 +180,9 @@ fn main() {
                                 let (hours, minutes) = utils::split_minutes(value as u32);
                                 println!("{}:\n{}h {}m\n", db::get_client_by_id(&conn, key).unwrap().name, hours, minutes)
                             });
+
+                            let (hours, minutes) = utils::split_minutes(client_totals.values().sum::<i64>() as u32);
+                            println!("Total: {hours}h {minutes}m");
                         },
                         cli::SummaryRange::Monthly => {
                             let (start, end) = utils::current_month_range();
@@ -202,6 +208,9 @@ fn main() {
                                 let (hours, minutes) = utils::split_minutes(value as u32);
                                 println!("{}:\n{}h {}m\n", db::get_client_by_id(&conn, key).unwrap().name, hours, minutes)
                             });
+
+                            let (hours, minutes) = utils::split_minutes(client_totals.values().sum::<i64>() as u32);
+                            println!("Total: {hours}h {minutes}m");
                         },
                     }
                 },
