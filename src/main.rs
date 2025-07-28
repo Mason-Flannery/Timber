@@ -153,8 +153,56 @@ fn main() {
                                 println!("{}:\n{}h {}m\n", db::get_client_by_id(&conn, key).unwrap().name, hours, minutes)
                             });
                         }
-                        cli::SummaryRange::Weekly => println!("Weekly summaries are not yet implemented!"),
-                        cli::SummaryRange::Monthly => println!("Monthly summaries are not yet implemented!"),
+                        cli::SummaryRange::Weekly => {
+                            let (start, end) = utils::current_week_range();
+                            let results = db::get_sessions_within_range(&conn, &start, &end).expect("An error occurred while fetching the daily sessions");
+                            let mut client_totals: HashMap<i32, i64> = HashMap::new();
+                            for result in results {
+                                // println!("{}, {}, {}", result.clien)
+                        
+                                if client_totals.contains_key(&result.client_id) {
+                                    match result.get_timedelta() {
+                                        Some(delta) => client_totals.insert(result.client_id, client_totals.get(&result.client_id).unwrap() + delta.num_minutes()),
+                                        None => continue,
+                                    };
+                                }
+                                else {
+                                    match result.get_timedelta() {
+                                        Some(delta) => client_totals.insert(result.client_id, delta.num_minutes()),
+                                        None => continue,
+                                    };
+                                }
+                            }
+                            client_totals.iter().for_each(|(&key, &value)| {
+                                let (hours, minutes) = utils::split_minutes(value as u32);
+                                println!("{}:\n{}h {}m\n", db::get_client_by_id(&conn, key).unwrap().name, hours, minutes)
+                            });
+                        },
+                        cli::SummaryRange::Monthly => {
+                            let (start, end) = utils::current_month_range();
+                            let results = db::get_sessions_within_range(&conn, &start, &end).expect("An error occurred while fetching the daily sessions");
+                            let mut client_totals: HashMap<i32, i64> = HashMap::new();
+                            for result in results {
+                                // println!("{}, {}, {}", result.clien)
+                        
+                                if client_totals.contains_key(&result.client_id) {
+                                    match result.get_timedelta() {
+                                        Some(delta) => client_totals.insert(result.client_id, client_totals.get(&result.client_id).unwrap() + delta.num_minutes()),
+                                        None => continue,
+                                    };
+                                }
+                                else {
+                                    match result.get_timedelta() {
+                                        Some(delta) => client_totals.insert(result.client_id, delta.num_minutes()),
+                                        None => continue,
+                                    };
+                                }
+                            }
+                            client_totals.iter().for_each(|(&key, &value)| {
+                                let (hours, minutes) = utils::split_minutes(value as u32);
+                                println!("{}:\n{}h {}m\n", db::get_client_by_id(&conn, key).unwrap().name, hours, minutes)
+                            });
+                        },
                     }
                 },
         Commands::Switch { input, note } =>{

@@ -64,10 +64,13 @@ pub enum SessionOptions {
     Current,
 }
 
-#[derive(ValueEnum, Clone, Debug)]
+#[derive(clap::Subcommand, clap::ValueEnum, Clone, Debug)]
 pub enum SummaryRange {
+    /// Summary of hours tracked in the current day (UTC)
     Daily,
+    /// Summary of hours tracked in the current pay week (Sat - Fri, UTC)
     Weekly,
+    /// Summary of hours tracked in the current month (UTC)
     Monthly,
 }
 
@@ -77,9 +80,9 @@ pub enum Commands {
     Client(ClientOptions),
     #[command(subcommand, about = "Manage sessions")]
     Session(SessionOptions),
-    #[command(about="Display a formatted job summary of worked time")]
+    #[command(about="Display a formatted job summary of worked time", )]
     Summary {
-        #[arg(value_enum)]
+        #[arg(value_enum, help = "Time range for summary (daily, weekly, monthly)")]
         range: SummaryRange,
     },
     #[command(about="End current session and switch to a different client / project")]
