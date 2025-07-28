@@ -69,7 +69,7 @@ pub fn apply_migrations(conn: &Connection) -> rusqlite::Result<()> {
 
     if version < 2 {
         // Example migration: add 'tag' column to sessions
-        conn.execute("ALTER TABLE sessions ADD COLUMN offset_minutes INTEGER NOT NULL", [])?;
+        conn.execute("ALTER TABLE sessions ADD COLUMN offset_minutes INTEGER NOT NULL DEFAULT 0", [])?;
         version = 2;
         update_schema_version(conn, version)?;
     }
