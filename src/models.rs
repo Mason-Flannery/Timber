@@ -19,9 +19,9 @@ impl Session {
             Some(end_str) => end_str.parse::<DateTime<Utc>>().ok()?,
             None => Utc::now(),
         };
-        Some(end-start + Duration::minutes(self.offset_minutes.into()))
+        Some(end - start + Duration::minutes(self.offset_minutes.into()))
     }
-} 
+}
 
 #[derive(Debug)]
 pub struct Client {

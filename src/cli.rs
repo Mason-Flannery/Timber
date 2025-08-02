@@ -14,22 +14,25 @@ pub struct Cli {
 #[derive(Clone)]
 pub enum UserInput {
     ByName(String),
-    ById(i32)
+    ById(i32),
 }
 #[derive(Subcommand)]
 pub enum ClientOptions {
-    #[command(about="Add a new client")]
+    #[command(about = "Add a new client")]
     Add {
         name: String,
         #[arg(short, long)]
         note: Option<String>,
     },
-    #[command(alias = "rm", about="Remove the client with the provided id or name (alias: rm)")]
+    #[command(
+        alias = "rm",
+        about = "Remove the client with the provided id or name (alias: rm)"
+    )]
     Remove {
         #[arg(value_parser = parse_input)]
         input: UserInput,
     },
-    #[command(alias = "ls", about="List all clients (alias: ls)")]
+    #[command(alias = "ls", about = "List all clients (alias: ls)")]
     List,
 }
 
@@ -43,24 +46,34 @@ fn parse_input(s: &str) -> Result<UserInput, String> {
 
 #[derive(Subcommand)]
 pub enum SessionOptions {
-    #[command(alias = "new", about="Start a new time-tracking session (alias: new)")]
+    #[command(
+        alias = "new",
+        about = "Start a new time-tracking session (alias: new)"
+    )]
     Start {
         #[arg(value_parser = parse_input)]
         input: UserInput,
         note: Option<String>,
     },
-    #[command(alias = "stop", about="End the session tracking (alias: stop)")]
+    #[command(alias = "stop", about = "End the session tracking (alias: stop)")]
     End,
-    #[command(alias = "rm", about="Remove the session with the provided id (alias: rm)")]
-    Remove {
-        id: i32,
-    },
-    #[command(alias = "ls", about="List all sessions, optionally specify a specific client (alias: ls)")]
+    #[command(
+        alias = "rm",
+        about = "Remove the session with the provided id (alias: rm)"
+    )]
+    Remove { id: i32 },
+    #[command(
+        alias = "ls",
+        about = "List all sessions, optionally specify a specific client (alias: ls)"
+    )]
     List {
         #[arg(value_parser = parse_input)]
         client: Option<UserInput>,
     },
-    #[command(alias = "show", about="Display the current working session (alias: show)")]
+    #[command(
+        alias = "show",
+        about = "Display the current working session (alias: show)"
+    )]
     Current,
 }
 
@@ -76,24 +89,35 @@ pub enum SummaryRange {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    #[command(subcommand, alias = "project", about = "Manage clients (alias: project)")]
+    #[command(
+        subcommand,
+        alias = "project",
+        about = "Manage clients (alias: project)"
+    )]
     Client(ClientOptions),
     #[command(subcommand, about = "Manage sessions")]
     Session(SessionOptions),
-    #[command(alias="sum", about="Display a formatted job summary of worked time", )]
+    #[command(
+        alias = "sum",
+        about = "Display a formatted job summary of worked time"
+    )]
     Summary {
         #[arg(value_enum, help = "Time range for summary (daily, weekly, monthly)")]
         range: SummaryRange,
     },
-    #[command(about="End current session and switch to a different client / project")]
+    #[command(about = "End current session and switch to a different client / project")]
     Switch {
         #[arg(value_parser = parse_input)]
         input: UserInput,
         note: Option<String>,
     },
-    #[command(alias="fix", about="Add or remove time from the current session", allow_hyphen_values = true)]
+    #[command(
+        alias = "fix",
+        about = "Add or remove time from the current session",
+        allow_hyphen_values = true
+    )]
     Patch {
         #[arg(short, long, help = "Minutes to adjust (positive or negative)")]
-        minutes: i32
-    }
+        minutes: i32,
+    },
 }

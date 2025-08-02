@@ -1,13 +1,14 @@
 use std::fs;
 
 use chrono::{DateTime, Utc};
-use rusqlite::{params, Connection, OptionalExtension, Result};
+use rusqlite::{Connection, OptionalExtension, Result, params};
 
 use crate::models::{Client, Session};
 use platform_dirs;
 
 pub fn init_db() -> Connection {
-    let app_dirs = platform_dirs::AppDirs::new(Some("Timber"), true).expect("Failed to get directories");
+    let app_dirs =
+        platform_dirs::AppDirs::new(Some("Timber"), true).expect("Failed to get directories");
     let db_dir = app_dirs.data_dir;
     fs::create_dir_all(&db_dir).expect("Failed to create data directory"); // Create the database directory in appdata if it doesn't exist
     let conn = Connection::open(db_dir.join("timber.db")).expect("Failed to open database");
@@ -69,7 +70,10 @@ pub fn apply_migrations(conn: &Connection) -> rusqlite::Result<()> {
 
     if version < 2 {
         // Example migration: add 'tag' column to sessions
-        conn.execute("ALTER TABLE sessions ADD COLUMN offset_minutes INTEGER NOT NULL DEFAULT 0", [])?;
+        conn.execute(
+            "ALTER TABLE sessions ADD COLUMN offset_minutes INTEGER NOT NULL DEFAULT 0",
+            [],
+        )?;
         version = 2;
         update_schema_version(conn, version)?;
     }
@@ -94,13 +98,19 @@ pub fn get_session_by_id(conn: &Connection, id: i32) -> Result<Session, rusqlite
             start_timestamp: row.get(2)?,
             end_timestamp: row.get::<_, Option<String>>(3)?,
             note: row.get::<_, Option<String>>(4)?,
-            offset_minutes: row.get(5)?
+            offset_minutes: row.get(5)?,
         })
     })
 }
 
-pub fn get_session_id_by_name(conn: &Connection, name: String) -> Result<Option<i32>, rusqlite::Error> {
-    conn.query_row("SELECT id FROM sessions WHERE name = ?1", [name], |row| row.get(0)).optional()
+pub fn get_session_id_by_name(
+    conn: &Connection,
+    name: String,
+) -> Result<Option<i32>, rusqlite::Error> {
+    conn.query_row("SELECT id FROM sessions WHERE name = ?1", [name], |row| {
+        row.get(0)
+    })
+    .optional()
 }
 
 pub fn remove_session(conn: &Connection, id: i32) -> Result<(), rusqlite::Error> {
@@ -128,7 +138,7 @@ pub fn list_sessions(
                 start_timestamp: row.get(2)?,
                 end_timestamp: row.get(3)?,
                 note: row.get(4)?,
-                offset_minutes: row.get(5)?
+                offset_minutes: row.get(5)?,
             })
         })?;
         Ok(session_iter.collect::<Result<Vec<Session>, _>>()?)
@@ -149,7 +159,7 @@ pub fn list_sessions(
                 start_timestamp: row.get(2)?,
                 end_timestamp: row.get(3)?,
                 note: row.get(4)?,
-                offset_minutes: row.get(5)?
+                offset_minutes: row.get(5)?,
             })
         })?;
         Ok(session_iter.collect::<Result<Vec<Session>, _>>()?)
@@ -166,7 +176,7 @@ pub fn store_client(conn: &Connection, client: &Client) -> Result<Option<i32>, r
             if err.code == rusqlite::ErrorCode::ConstraintViolation =>
         {
             println!("Client already exists! Insert ignored.");
-            return Ok(Option::None)
+            return Ok(Option::None);
         }
         Err(e) => return Err(e),
     };
@@ -185,8 +195,14 @@ pub fn get_client_by_id(conn: &Connection, id: i32) -> Result<Client, rusqlite::
     })
 }
 
-pub fn get_client_id_by_name(conn: &Connection, name: String) -> Result<Option<i32>, rusqlite::Error> {
-    conn.query_row("SELECT id FROM clients WHERE name = ?1", [name], |row| row.get(0)).optional()
+pub fn get_client_id_by_name(
+    conn: &Connection,
+    name: String,
+) -> Result<Option<i32>, rusqlite::Error> {
+    conn.query_row("SELECT id FROM clients WHERE name = ?1", [name], |row| {
+        row.get(0)
+    })
+    .optional()
 }
 
 pub fn remove_client(conn: &Connection, id: i32) -> Result<(), rusqlite::Error> {
@@ -223,7 +239,7 @@ pub fn get_active_session(conn: &Connection) -> Result<Option<Session>, rusqlite
             start_timestamp: row.get(2)?,
             end_timestamp: None,
             note: row.get(4)?,
-            offset_minutes: row.get(5)?
+            offset_minutes: row.get(5)?,
         })
     });
 
@@ -233,7 +249,6 @@ pub fn get_active_session(conn: &Connection) -> Result<Option<Session>, rusqlite
         Err(e) => Err(e),
     }
 }
-
 
 pub fn commit_session_changes(conn: &Connection, session: &Session) -> Result<(), rusqlite::Error> {
     match conn.execute(
@@ -266,24 +281,30 @@ pub fn commit_client_changes(conn: &Connection, client: &Client) -> Result<(), r
     }
 }
 
-pub fn get_sessions_within_range(conn: &Connection, start: &DateTime<Utc>, end: &DateTime<Utc>) -> Result<Vec<Session>, rusqlite::Error> {
+pub fn get_sessions_within_range(
+    conn: &Connection,
+    start: &DateTime<Utc>,
+    end: &DateTime<Utc>,
+) -> Result<Vec<Session>, rusqlite::Error> {
     let mut stmt = conn.prepare(
         "SELECT id, client_id, start_timestamp, end_timestamp, note, offset_minutes
          FROM sessions
          WHERE start_timestamp >= ?1 AND start_timestamp <= ?2
-         ORDER BY start_timestamp ASC"
+         ORDER BY start_timestamp ASC",
     )?;
 
-    let sessions = stmt.query_map([start.to_rfc3339(), end.to_rfc3339()], |row| {
-        Ok(Session {
-            id: row.get(0)?,
-            client_id: row.get(1)?,
-            start_timestamp: row.get(2)?,
-            end_timestamp: row.get(3)?,
-            note: row.get(4)?,
-            offset_minutes: row.get(5)?
-        })
-    })?.collect::<Result<Vec<_>>>()?;
+    let sessions = stmt
+        .query_map([start.to_rfc3339(), end.to_rfc3339()], |row| {
+            Ok(Session {
+                id: row.get(0)?,
+                client_id: row.get(1)?,
+                start_timestamp: row.get(2)?,
+                end_timestamp: row.get(3)?,
+                note: row.get(4)?,
+                offset_minutes: row.get(5)?,
+            })
+        })?
+        .collect::<Result<Vec<_>>>()?;
 
     Ok(sessions)
 }
@@ -356,7 +377,9 @@ fn insert_test_client(conn: &Connection) -> i32 {
         note: Some("test client".into()),
     };
 
-    store_client(conn, &client).unwrap().expect("This is a test and should not fail")
+    store_client(conn, &client)
+        .unwrap()
+        .expect("This is a test and should not fail")
 }
 
 fn insert_test_session(conn: &Connection) -> i32 {
@@ -367,7 +390,7 @@ fn insert_test_session(conn: &Connection) -> i32 {
         start_timestamp: Utc::now().to_rfc3339(),
         end_timestamp: Option::None,
         note: Option::Some("testing".to_string()),
-        offset_minutes: 5
+        offset_minutes: 5,
     };
 
     store_session(&conn, &session).unwrap()

@@ -22,8 +22,8 @@ pub fn patch_session(conn: &Connection, offset: i32) -> Result<Option<()>, rusql
             session.offset_minutes += offset;
             let _ = db::commit_session_changes(conn, &session);
             Ok(Some(()))
-        },
-        Ok(None) => {Ok(None)}
+        }
+        Ok(None) => Ok(None),
         Err(e) => Err(e),
     }
 }
