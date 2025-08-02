@@ -15,8 +15,16 @@ pub fn init_db(config: &Config) -> Connection {
             .parent()
             .expect("Invalid database path"),
     )
-    .expect("Failed to create database dir"); // Create the database directory if it doesn't exist
-    let conn = Connection::open(&config.database_path).expect("Failed to open database");
+    .expect("Error: Failed to create database dir"); // Create the database directory if it doesn't exist
+    let conn = Connection::open(&config.database_path).unwrap_or_else(|_| {
+        let default = Config::default();
+        println!(
+            "Error: Unable to find or build database at path [{}], using [{}]",
+            &config.database_path.to_str().unwrap(),
+            default.database_path.to_str().unwrap()
+        );
+        Connection::open(default.database_path).unwrap()
+    });
     init_schema(&conn);
     apply_migrations(&conn).expect("Failed to apply migrations");
 
