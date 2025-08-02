@@ -1,4 +1,4 @@
-use chrono::{Utc};
+use chrono::Utc;
 use clap::Parser;
 use cli::{Cli, Commands};
 use rusqlite::Connection;
@@ -132,9 +132,13 @@ fn main() {
             match command {
                 cli::ConfigCommand::Set { database_path } => {
                     if let Some(database_path) = database_path {
-                        config.database_path = database_path;
-                        config.save(); // Save update to disk
-                    }
+                            config.database_path = database_path;
+                            config.save(); // Save update to disk
+                            println!(
+                                "Successfully updated database path to: {}",
+                                config.database_path.to_str().unwrap()
+                            );
+                                                }
                 }
                 cli::ConfigCommand::Show => println!("{config}"),
                 cli::ConfigCommand::Reset => {
