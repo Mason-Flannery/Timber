@@ -1,7 +1,7 @@
 use chrono::{TimeDelta, Utc};
 use rusqlite::Connection;
 
-use crate::{db, models::Session};
+use crate::db;
 
 pub fn end_session(conn: &Connection) -> Result<Option<TimeDelta>, rusqlite::Error> {
     match db::get_active_session(conn) {
@@ -9,7 +9,7 @@ pub fn end_session(conn: &Connection) -> Result<Option<TimeDelta>, rusqlite::Err
             session.end_timestamp = Some(Utc::now().to_rfc3339());
             let _ = db::commit_session_changes(conn, &session);
             let delta = session.get_timedelta();
-            Ok(delta)
+            Ok(Some(delta))
         }
         Ok(None) => Ok(None),
         Err(err) => Err(err),

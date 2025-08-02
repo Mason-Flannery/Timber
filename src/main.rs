@@ -7,6 +7,7 @@ use crate::{
     cli::{ClientOptions, SessionOptions, UserInput},
     config::Config,
     models::{Client, Session},
+    views::{SessionView, display_client_time_summaries},
 };
 mod cli;
 mod commands;
@@ -146,6 +147,26 @@ fn main() {
                     println!("Your config has been reset!")
                 }
             }
+        }
+        Commands::Status => {
+            match db::get_active_session(&conn) {
+                Ok(Some(session)) => {
+                    let view =
+                        SessionView::from_session(&conn, session).expect("Unable to open session");
+                    let (hours, minutes) =
+                        utils::split_minutes(view.session.get_timedelta().num_minutes() as u32);
+                    println!(
+                        "Active session: {} ({}h {}m)",
+                        view.client_name, hours, minutes
+                    );
+                }
+                Ok(None) => println!("Active session: None!"),
+                Err(_) => {
+                    println!("Error: Unable to retrieve active session");
+                }
+            }
+            let (start, end) = utils::current_day_range();
+            display_client_time_summaries(&conn, &start, &end);
         }
     }
 }

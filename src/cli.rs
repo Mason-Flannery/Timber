@@ -141,4 +141,6 @@ pub enum Commands {
         #[command(subcommand, help = "View config options")]
         command: ConfigCommand,
     },
+    #[command(about = "Display short status summary")]
+    Status,
 }

@@ -39,13 +39,9 @@ impl std::fmt::Display for SessionView {
             None => "In progress".to_string(),
         };
 
-        let duration_str = match self.session.get_timedelta() {
-            Some(delta) => {
-                let (hours, minutes) = utils::split_minutes(delta.num_minutes() as u32);
-                format!("Duration: {hours}h {minutes}m")
-            }
-            None => "".to_string(),
-        };
+        let (hours, minutes) =
+            utils::split_minutes(self.session.get_timedelta().num_minutes() as u32);
+        let duration_str = format!("Duration: {hours}h {minutes}m");
 
         let note_str = match &self.session.note {
             Some(note) => format!("\nNote: {note}"),
@@ -74,18 +70,13 @@ pub fn display_client_time_summaries(
     let mut client_totals: HashMap<i32, i64> = HashMap::new();
     for result in results {
         if client_totals.contains_key(&result.client_id) {
-            match result.get_timedelta() {
-                Some(delta) => client_totals.insert(
-                    result.client_id,
-                    client_totals.get(&result.client_id).unwrap() + delta.num_minutes(),
-                ),
-                None => continue,
-            };
+            client_totals.insert(
+                result.client_id,
+                client_totals.get(&result.client_id).unwrap()
+                    + result.get_timedelta().num_minutes(),
+            );
         } else {
-            match result.get_timedelta() {
-                Some(delta) => client_totals.insert(result.client_id, delta.num_minutes()),
-                None => continue,
-            };
+            client_totals.insert(result.client_id, result.get_timedelta().num_minutes());
         }
     }
     client_totals.iter().for_each(|(&key, &value)| {

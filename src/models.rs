@@ -9,17 +9,19 @@ pub struct Session {
     pub offset_minutes: i32, // can be negative or positive
 }
 impl Session {
-    pub fn get_timedelta(&self) -> Option<TimeDelta> {
+    pub fn get_timedelta(&self) -> TimeDelta {
         let start: DateTime<Utc> = self
             .start_timestamp
             .parse::<DateTime<Utc>>()
             .expect("Invalid start timestamp");
 
         let end = match &self.end_timestamp {
-            Some(end_str) => end_str.parse::<DateTime<Utc>>().ok()?,
+            Some(end_str) => end_str
+                .parse::<DateTime<Utc>>()
+                .expect("Failed to parse ending timestamp"),
             None => Utc::now(),
         };
-        Some(end - start + Duration::minutes(self.offset_minutes.into()))
+        end - start + Duration::minutes(self.offset_minutes.into())
     }
 }
 
