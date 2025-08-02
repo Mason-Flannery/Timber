@@ -3,15 +3,20 @@ use std::fs;
 use chrono::{DateTime, Utc};
 use rusqlite::{Connection, OptionalExtension, Result, params};
 
-use crate::models::{Client, Session};
-use platform_dirs;
+use crate::{
+    config::Config,
+    models::{Client, Session},
+};
 
-pub fn init_db() -> Connection {
-    let app_dirs =
-        platform_dirs::AppDirs::new(Some("Timber"), true).expect("Failed to get directories");
-    let db_dir = app_dirs.data_dir;
-    fs::create_dir_all(&db_dir).expect("Failed to create data directory"); // Create the database directory in appdata if it doesn't exist
-    let conn = Connection::open(db_dir.join("timber.db")).expect("Failed to open database");
+pub fn init_db(config: &Config) -> Connection {
+    fs::create_dir_all(
+        config
+            .database_path
+            .parent()
+            .expect("Invalid database path"),
+    )
+    .expect("Failed to create database dir"); // Create the database directory if it doesn't exist
+    let conn = Connection::open(&config.database_path).expect("Failed to open database");
     init_schema(&conn);
     apply_migrations(&conn).expect("Failed to apply migrations");
 

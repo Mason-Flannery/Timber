@@ -7,16 +7,20 @@ use rusqlite::Connection;
 
 use crate::{
     cli::{ClientOptions, SessionOptions, UserInput},
+    config::Config,
     models::{Client, Session},
 };
 mod cli;
 mod commands;
+mod config;
 mod db;
 mod models;
 mod utils;
 mod views;
 fn main() {
-    let conn = db::init_db(); // make sure the database exists
+    let config = Config::load().unwrap_or_default();
+
+    let conn = db::init_db(&config); // make sure the database exists
 
     let cli = Cli::parse();
 
