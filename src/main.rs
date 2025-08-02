@@ -138,7 +138,7 @@ fn end_session(conn: &Connection) {
                 delta.num_minutes().wrapping_rem(60)
             );
         }
-        Ok(None) => println!("Error: No active session was found to end!"),
+        Ok(None) => println!("Warning: No active session was found to end!"),
         Err(_) => println!("Error: Unable to to finish the session"),
     };
 }
