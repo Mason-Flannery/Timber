@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -87,6 +89,21 @@ pub enum SummaryRange {
     Monthly,
 }
 
+#[derive(Subcommand, Debug)]
+pub enum ConfigCommand {
+    /// Set config values
+    Set {
+        #[arg(long)]
+        //// Path to the database
+        database_path: Option<PathBuf>,
+        // Add other config fields here later
+    },
+    /// Show the current config
+    Show,
+    /// Reset the config to the default
+    Reset,
+}
+
 #[derive(Subcommand)]
 pub enum Commands {
     #[command(
@@ -119,5 +136,9 @@ pub enum Commands {
     Patch {
         #[arg(short, long, help = "Minutes to adjust (positive or negative)")]
         minutes: i32,
+    },
+    Config {
+        #[command(subcommand, help = "View config options")]
+        command: ConfigCommand,
     },
 }

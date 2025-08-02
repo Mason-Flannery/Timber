@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use chrono::{Datelike, TimeZone, Utc};
+use chrono::{Utc};
 use clap::Parser;
 use cli::{Cli, Commands};
 use rusqlite::Connection;
@@ -18,7 +16,7 @@ mod models;
 mod utils;
 mod views;
 fn main() {
-    let config = Config::load().unwrap_or_default();
+    let mut config = Config::load().unwrap_or_default();
 
     let conn = db::init_db(&config); // make sure the database exists
 
@@ -130,6 +128,21 @@ fn main() {
             }
             Err(e) => eprintln!("Error: Failed to patch active session: {e}"),
         },
+        Commands::Config { command } => {
+            match command {
+                cli::ConfigCommand::Set { database_path } => {
+                    if let Some(database_path) = database_path {
+                        config.database_path = database_path;
+                        config.save(); // Save update to disk
+                    }
+                }
+                cli::ConfigCommand::Show => println!("{config}"),
+                cli::ConfigCommand::Reset => {
+                    config::reset_config(); // ! Should I do anything with the old config?
+                    println!("Your config has been reset!")
+                }
+            }
+        }
     }
 }
 
