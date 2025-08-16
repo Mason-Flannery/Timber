@@ -143,4 +143,6 @@ pub enum Commands {
     },
     #[command(about = "Display short status summary")]
     Status,
+    #[command(about = "Launch the Timber GUI")]
+    Gui
 }
