@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -122,6 +121,7 @@ pub enum Commands {
         #[arg(value_enum, help = "Time range for summary (daily, weekly, monthly)")]
         range: SummaryRange,
     },
+    #[command(about = "End current session and switch to a different client / project")]
     #[command(about = "End current session and switch to a different client / project")]
     Switch {
         #[arg(value_parser = parse_input)]

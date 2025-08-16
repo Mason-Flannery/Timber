@@ -6,6 +6,8 @@ edition = "2024"
 [dependencies]
 chrono = "0.4.41"
 clap = { version = "4.5.41", features = ["derive"] }
+eframe = "0.32.1"
+egui = "0.32.1"
 platform-dirs = "0.3.0"
 rusqlite = { version = "0.37.0", features = ["bundled"] }
 serde = { version = "1.0.219", features = ["derive"] }

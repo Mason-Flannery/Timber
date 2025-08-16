@@ -13,6 +13,7 @@ mod cli;
 mod commands;
 mod config;
 mod db;
+mod gui;
 mod models;
 mod utils;
 mod views;
@@ -21,6 +22,8 @@ fn main() {
 
     let conn = db::init_db(&config); // make sure the database exists
 
+    gui::main(conn);
+    return;
     let cli = Cli::parse();
 
     match cli.command {
