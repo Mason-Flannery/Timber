@@ -1,13 +1,14 @@
 use crate::{
     commands, config::Config, db, models::{Client, Session}, utils, views::SessionView
 };
-use chrono::{Datelike, TimeZone, Utc};
+use chrono::{Utc};
 use eframe::egui;
 use rusqlite::Connection;
 
 struct TimberApp {
     conn: Connection, // direct DB connection
     clients: Vec<Client>,
+    selected_client: Option<i32>,
     current_session: Option<SessionView>,
     new_client_name: String,
     status_message: String,
@@ -36,13 +37,21 @@ impl Default for TimberApp {
             current_session: None,
             new_client_name: String::new(),
             status_message: String::new(),
+            selected_client: None, // will set below if clients exist
         };
 
         app.refresh_clients();
         app.refresh_current_session();
+
+        // Automatically select the first client if there are any
+        if let Some(first) = app.clients.first() {
+            app.selected_client = Some(first.id);
+        }
+
         app
     }
 }
+
 
 impl eframe::App for TimberApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -88,69 +97,91 @@ impl eframe::App for TimberApp {
             ui.separator();
 
             // SESSION CONTROLS
-            ui.heading("Session");
-            match &self.current_session {
-                Some(session) => {
-                    let elapsed = session.session
-                        .get_timedelta();
-                    let (hours, minutes) = utils::split_minutes(elapsed.num_minutes() as u32);
+ui.heading("Session");
 
-                    ui.label(format!(
-                        "Active session for client {}: {}h {}m",
-                        session.client_name, hours, minutes
-                    ));
-                    if ui.button("⏹ Stop Session").clicked() {
-                        if let Err(_) = commands::session::end_session(&self.conn) {
-                            self.status_message = "Failed to stop session".into();
-                        } else {
-                            self.status_message = "Stopped current session".into();
-                            self.refresh_current_session();
-                        }
-                    }
-                }
-                None => {
-                    ui.label("No active session");
-                    if ui.button("▶ Start Session (first client)").clicked() {
-                        if let Some(first) = self.clients.first() {
-                            if let Err(_) = db::store_session(&self.conn, &Session {
-                                id: 0,
-                                client_id: first.id,
-                                start_timestamp: Utc::now().to_rfc3339(),
-                                end_timestamp: Option::None,
-                                note: Option::None,
-                                offset_minutes: 0
-                            }) {
-                                self.status_message = "Failed to start session".into();
-                            } else {
-                                self.status_message = format!("Started session for {}", first.name);
-                                self.refresh_current_session();
-                            }
-                        }
-                    }
-                }
+// Client selection dropdown (only needed when starting a session)
+if self.current_session.is_none() {
+    ui.horizontal(|ui| {
+    ui.label("Select client:");
+    egui::ComboBox::from_id_salt("client_select")
+        .selected_text(
+            self.selected_client
+                .and_then(|id| self.clients.iter().find(|c| c.id == id))
+                .map(|c| c.name.clone())
+                .unwrap_or("None selected".into())
+        )
+        .show_ui(ui, |ui| {
+            for client in &self.clients {
+                ui.selectable_value(&mut self.selected_client, Some(client.id), &client.name);
             }
+        });
+});
+}
+
+match &self.current_session {
+    Some(session) => {
+        let elapsed = session.session.get_timedelta();
+        let (hours, minutes) = utils::split_minutes(elapsed.num_minutes() as u32);
+
+        ui.label(format!(
+            "Active session for client {}: {}h {}m",
+            session.client_name, hours, minutes
+        ));
+
+        if ui.button("⏹ Stop Session").clicked() {
+            if let Err(_) = commands::session::end_session(&self.conn) {
+                self.status_message = "Failed to stop session".into();
+            } else {
+                self.status_message = "Stopped current session".into();
+                self.refresh_current_session();
+            }
+        }
+    }
+    None => {
+        ui.label("No active session");
+
+        if ui.button("▶ Start Session").clicked() {
+    if let Some(client_id) = self.selected_client {
+        if let Some(client) = self.clients.iter().find(|c| c.id == client_id) {
+            if let Err(_) = db::store_session(&self.conn, &Session {
+                id: 0,
+                client_id,
+                start_timestamp: Utc::now().to_rfc3339(),
+                end_timestamp: None,
+                note: None,
+                offset_minutes: 0,
+            }) {
+                self.status_message = "Failed to start session".into();
+            } else {
+                self.status_message = format!("Started session for {}", client.name);
+                self.refresh_current_session();
+            }
+        }
+    } else {
+        self.status_message = "Please select a client first".into();
+    }
+}
+    }
+}
 
             ui.separator();
 
             // DAILY TOTALS
             ui.heading("Daily Totals");
-            let now: chrono::DateTime<Utc> = chrono::Utc::now();
-            let start = chrono::Utc
-                .with_ymd_and_hms(now.year(), now.month(), now.day(), 0, 0, 0)
-                .unwrap(); // Get time at start of day
-            let end = start + chrono::Duration::days(1); // Get time at end of day
-
+            let (start, end) = utils::current_day_range();
             let sessions_today = db::get_sessions_within_range(&self.conn, &start, &end)
                 .expect("An error occurred while fetching the daily sessions");
 
             let mut totals: std::collections::HashMap<i32, i64> = std::collections::HashMap::new();
             for s in sessions_today {
-                if let delta = s.get_timedelta() {
-                    *totals.entry(s.client_id).or_insert(0) += delta.num_minutes();
-                }
+                let delta = s.get_timedelta();
+                *totals.entry(s.client_id).or_insert(0) += delta.num_minutes();
             }
 
-            for (&cid, &minutes) in &totals {
+            let mut ids: Vec<i32> = totals.keys().copied().collect();
+            ids.sort();
+            for cid in ids {
+                let minutes = totals[&cid];
                 let client_name = db::get_client_by_id(&self.conn, cid)
                     .map(|c| c.name)
                     .unwrap_or_else(|_| "Unknown".into());

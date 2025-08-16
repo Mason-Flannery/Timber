@@ -22,8 +22,6 @@ fn main() {
 
     let conn = db::init_db(&config); // make sure the database exists
 
-    gui::main(conn);
-    return;
     let cli = Cli::parse();
 
     match cli.command {
