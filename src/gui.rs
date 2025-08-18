@@ -208,6 +208,32 @@ impl eframe::App for TimberApp {
             let total_minutes: i64 = totals.values().sum();
             let (h, m) = utils::split_minutes(total_minutes as u32);
             ui.label(format!("Total: {}h {}m", h, m));
+            
+            // Recent sessions
+            ui.separator();
+            ui.heading("Recent Sessions");
+            ui.push_id("scroll_area_2", |ui| {
+                egui::ScrollArea::vertical()
+                    .max_height(100.0)
+                    .show(ui, |ui| {
+                        for session in db::get_sessions_within_range(&self.conn, &start, &end)
+                            .expect("Failed to query db?")
+                            .into_iter()
+                            .rev()
+                            .take(5)
+                        {   
+                            let view = SessionView::from_session(&self.conn, session)
+                                .expect("Failed to create session view");
+                            let time = view.session.get_timedelta();
+                            ui.label(format!(
+                                "{}: {}h {}m",
+                                view.client_name,
+                                time.num_hours(),
+                                time.num_minutes().wrapping_rem(60) // ! This is a bit of a hack to get the minutes
+                            ));
+                        }
+                    });
+            });
 
             ui.separator();
 
