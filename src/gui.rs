@@ -246,9 +246,12 @@ impl eframe::App for TimberApp {
 
 // Main function
 pub fn main(conn: Connection) -> eframe::Result<()> {
-    let options = eframe::NativeOptions::default();
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size(egui::Vec2 { x: 400.0, y: 500.0 }),
+        ..Default::default()
+    };
     let mut app = Box::new(TimberApp::default());
-
     app.conn = conn; // Replace database connection
     eframe::run_native(
         "Timber",
