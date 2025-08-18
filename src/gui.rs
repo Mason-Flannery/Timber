@@ -113,10 +113,10 @@ impl eframe::App for TimberApp {
                     ui.label("Select client:");
                     egui::ComboBox::from_id_salt("client_select")
                         .selected_text(
-                            self.selected_client
-                                .and_then(|id| self.clients.iter().find(|c| c.id == id))
-                                .map(|c| c.name.clone())
-                                .unwrap_or("None selected".into()),
+                            self.clients
+                                .iter()
+                                .find(|c| Some(c.id) == self.selected_client)
+                                .map_or("None selected".to_string(), |c| c.name.clone()),
                         )
                         .show_ui(ui, |ui| {
                             for client in &self.clients {
