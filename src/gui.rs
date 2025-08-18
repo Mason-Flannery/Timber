@@ -20,8 +20,12 @@ impl TimberApp {
     }
 
     fn refresh_current_session(&mut self) {
-        match db::get_active_session(&self.conn).expect("645") {
-            Some(session) => self.current_session = Some(SessionView::from_session(&self.conn, session).expect("Should be fine")),
+        match db::get_active_session(&self.conn).expect("Failed to get active session") {
+            Some(session) => {
+                self.current_session = Some(
+                    SessionView::from_session(&self.conn, session).expect("This should never fail"),
+                )
+            }
             None => self.current_session = Option::None,
         }
     }
