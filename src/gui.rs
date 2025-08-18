@@ -1,7 +1,12 @@
 use crate::{
-    commands, config::Config, db, models::{Client, Session}, utils, views::SessionView
+    commands,
+    config::Config,
+    db,
+    models::{Client, Session},
+    utils,
+    views::SessionView,
 };
-use chrono::{Utc};
+use chrono::Utc;
 use eframe::egui;
 use rusqlite::Connection;
 
@@ -56,7 +61,6 @@ impl Default for TimberApp {
     }
 }
 
-
 impl eframe::App for TimberApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -101,72 +105,80 @@ impl eframe::App for TimberApp {
             ui.separator();
 
             // SESSION CONTROLS
-ui.heading("Session");
+            ui.heading("Session");
 
-// Client selection dropdown (only needed when starting a session)
-if self.current_session.is_none() {
-    ui.horizontal(|ui| {
-    ui.label("Select client:");
-    egui::ComboBox::from_id_salt("client_select")
-        .selected_text(
-            self.selected_client
-                .and_then(|id| self.clients.iter().find(|c| c.id == id))
-                .map(|c| c.name.clone())
-                .unwrap_or("None selected".into())
-        )
-        .show_ui(ui, |ui| {
-            for client in &self.clients {
-                ui.selectable_value(&mut self.selected_client, Some(client.id), &client.name);
+            // Client selection dropdown (only needed when starting a session)
+            if self.current_session.is_none() {
+                ui.horizontal(|ui| {
+                    ui.label("Select client:");
+                    egui::ComboBox::from_id_salt("client_select")
+                        .selected_text(
+                            self.selected_client
+                                .and_then(|id| self.clients.iter().find(|c| c.id == id))
+                                .map(|c| c.name.clone())
+                                .unwrap_or("None selected".into()),
+                        )
+                        .show_ui(ui, |ui| {
+                            for client in &self.clients {
+                                ui.selectable_value(
+                                    &mut self.selected_client,
+                                    Some(client.id),
+                                    &client.name,
+                                );
+                            }
+                        });
+                });
             }
-        });
-});
-}
 
-match &self.current_session {
-    Some(session) => {
-        let elapsed = session.session.get_timedelta();
-        let (hours, minutes) = utils::split_minutes(elapsed.num_minutes() as u32);
+            match &self.current_session {
+                Some(session) => {
+                    let elapsed = session.session.get_timedelta();
+                    let (hours, minutes) = utils::split_minutes(elapsed.num_minutes() as u32);
 
-        ui.label(format!(
-            "Active session for client {}: {}h {}m",
-            session.client_name, hours, minutes
-        ));
+                    ui.label(format!(
+                        "Active session for client {}: {}h {}m",
+                        session.client_name, hours, minutes
+                    ));
 
-        if ui.button("⏹ Stop Session").clicked() {
-            if let Err(_) = commands::session::end_session(&self.conn) {
-                self.status_message = "Failed to stop session".into();
-            } else {
-                self.status_message = "Stopped current session".into();
-                self.refresh_current_session();
+                    if ui.button("⏹ Stop Session").clicked() {
+                        if let Err(_) = commands::session::end_session(&self.conn) {
+                            self.status_message = "Failed to stop session".into();
+                        } else {
+                            self.status_message = "Stopped current session".into();
+                            self.refresh_current_session();
+                        }
+                    }
+                }
+                None => {
+                    ui.label("No active session");
+
+                    if ui.button("▶ Start Session").clicked() {
+                        if let Some(client_id) = self.selected_client {
+                            if let Some(client) = self.clients.iter().find(|c| c.id == client_id) {
+                                if let Err(_) = db::store_session(
+                                    &self.conn,
+                                    &Session {
+                                        id: 0,
+                                        client_id,
+                                        start_timestamp: Utc::now().to_rfc3339(),
+                                        end_timestamp: None,
+                                        note: None,
+                                        offset_minutes: 0,
+                                    },
+                                ) {
+                                    self.status_message = "Failed to start session".into();
+                                } else {
+                                    self.status_message =
+                                        format!("Started session for {}", client.name);
+                                    self.refresh_current_session();
+                                }
+                            }
+                        } else {
+                            self.status_message = "Please select a client first".into();
+                        }
+                    }
+                }
             }
-        }
-    }
-    None => {
-        ui.label("No active session");
-
-        if ui.button("▶ Start Session").clicked() {
-    if let Some(client_id) = self.selected_client {
-        if let Some(client) = self.clients.iter().find(|c| c.id == client_id) {
-            if let Err(_) = db::store_session(&self.conn, &Session {
-                id: 0,
-                client_id,
-                start_timestamp: Utc::now().to_rfc3339(),
-                end_timestamp: None,
-                note: None,
-                offset_minutes: 0,
-            }) {
-                self.status_message = "Failed to start session".into();
-            } else {
-                self.status_message = format!("Started session for {}", client.name);
-                self.refresh_current_session();
-            }
-        }
-    } else {
-        self.status_message = "Please select a client first".into();
-    }
-}
-    }
-}
 
             ui.separator();
 

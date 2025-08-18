@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(
@@ -144,5 +144,5 @@ pub enum Commands {
     #[command(about = "Display short status summary")]
     Status,
     #[command(about = "Launch the Timber GUI")]
-    Gui
+    Gui,
 }
