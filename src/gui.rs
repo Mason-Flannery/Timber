@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use crate::{
     commands,
     config::Config,
@@ -17,6 +19,7 @@ struct TimberApp {
     current_session: Option<SessionView>,
     new_client_name: String,
     status_message: String,
+    last_refresh: std::time::Instant, // Track refresh time
 }
 
 impl TimberApp {
@@ -46,7 +49,8 @@ impl Default for TimberApp {
             current_session: None,
             new_client_name: String::new(),
             status_message: String::new(),
-            selected_client: None, // will set below if clients exist
+            selected_client: None,        // will set below if clients exist
+            last_refresh: Instant::now(), // Initialize last refresh time
         };
 
         app.refresh_clients();
@@ -63,6 +67,13 @@ impl Default for TimberApp {
 
 impl eframe::App for TimberApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Periodically refresh the session and clients
+        // This is relevant in the case of CLI commands that might change the state
+        if self.last_refresh.elapsed().as_secs() > 5 {
+            self.refresh_current_session();
+            self.refresh_clients();
+            self.last_refresh = std::time::Instant::now();
+        }
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("🌲 Timber Time Tracker");
 
@@ -208,7 +219,7 @@ impl eframe::App for TimberApp {
             let total_minutes: i64 = totals.values().sum();
             let (h, m) = utils::split_minutes(total_minutes as u32);
             ui.label(format!("Total: {}h {}m", h, m));
-            
+
             // Recent sessions
             ui.separator();
             ui.heading("Recent Sessions");
@@ -221,7 +232,7 @@ impl eframe::App for TimberApp {
                             .into_iter()
                             .rev()
                             .take(5)
-                        {   
+                        {
                             let view = SessionView::from_session(&self.conn, session)
                                 .expect("Failed to create session view");
                             let time = view.session.get_timedelta();
