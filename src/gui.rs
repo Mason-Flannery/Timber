@@ -166,22 +166,35 @@ impl eframe::App for TimberApp {
                     if ui.button("▶ Start Session").clicked() {
                         if let Some(client_id) = self.selected_client {
                             if let Some(client) = self.clients.iter().find(|c| c.id == client_id) {
-                                if let Err(_) = db::store_session(
-                                    &self.conn,
-                                    &Session {
-                                        id: 0,
-                                        client_id,
-                                        start_timestamp: Utc::now().to_rfc3339(),
-                                        end_timestamp: None,
-                                        note: None,
-                                        offset_minutes: 0,
-                                    },
-                                ) {
-                                    self.status_message = "Failed to start session".into();
-                                } else {
-                                    self.status_message =
-                                        format!("Started session for {}", client.name);
-                                    self.refresh_current_session();
+                                match db::get_active_session(&self.conn) {
+                                    Ok(Some(_)) => {
+                                        self.status_message =
+                                            "There is already an active session".into();
+                                        self.refresh_current_session();
+                                    }
+                                    Ok(None) => {
+                                        if let Err(_) = db::store_session(
+                                            &self.conn,
+                                            &Session {
+                                                id: 0,
+                                                client_id,
+                                                start_timestamp: Utc::now().to_rfc3339(),
+                                                end_timestamp: None,
+                                                note: None,
+                                                offset_minutes: 0,
+                                            },
+                                        ) {
+                                            self.status_message = "Failed to start session".into();
+                                        } else {
+                                            self.status_message =
+                                                format!("Started session for {}", client.name);
+                                            self.refresh_current_session();
+                                        }
+                                    }
+                                    Err(e) => {
+                                        self.status_message =
+                                            format!("Failed to query db: {}", e);
+                                    }
                                 }
                             }
                         } else {
