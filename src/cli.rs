@@ -122,7 +122,6 @@ pub enum Commands {
         range: SummaryRange,
     },
     #[command(about = "End current session and switch to a different client / project")]
-    #[command(about = "End current session and switch to a different client / project")]
     Switch {
         #[arg(value_parser = parse_input)]
         input: UserInput,
@@ -137,10 +136,12 @@ pub enum Commands {
         #[arg(short, long, help = "Minutes to adjust (positive or negative)")]
         minutes: i32,
     },
-    Config {
-        #[command(subcommand, help = "View config options")]
-        command: ConfigCommand,
-    },
+    #[command(
+        subcommand,
+        alias = "cfg",
+        about = "View or modify config options (alias: cfg)"
+    )]
+    Config(ConfigCommand),
     #[command(about = "Display short status summary")]
     Status,
     #[command(about = "Launch the Timber GUI")]

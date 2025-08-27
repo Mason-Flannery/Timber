@@ -130,7 +130,7 @@ fn main() {
             }
             Err(e) => eprintln!("Error: Failed to patch active session: {e}"),
         },
-        Commands::Config { command } => {
+        Commands::Config(command) => {
             match command {
                 cli::ConfigCommand::Set { database_path } => {
                     if let Some(database_path) = database_path {
