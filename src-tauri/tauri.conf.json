@@ -4,8 +4,10 @@
   "version": "0.1.0",
   "identifier": "com.mbubb.timber",
   "build": {
-    "devUrl": "http://localhost:8000",
-    "frontendDist": "../dist"
+    "beforeDevCommand": "flutter run -d web-server --web-port 5000",
+    "devUrl": "http://localhost:5000",
+    "beforeBuildCommand": "flutter build web",
+    "frontendDist": "../flutter/frontend/web"
   },
   
    "app": {

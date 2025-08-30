@@ -1,1 +1,4 @@
 flutter WEB should compile stuff into here
+
+I'm using bun rn for stuff:
+powershell -c "irm bun.sh/install.ps1 | iex"
