@@ -7,7 +7,7 @@ use crate::{
     cli::{ClientOptions, SessionOptions, UserInput},
     config::Config,
     models::{Client, Session},
-    views::{SessionView, display_client_time_summaries},
+    views::{SessionView, display_daily_time_summary},
 };
 mod cli;
 mod commands;
@@ -166,8 +166,7 @@ fn main() {
                     println!("Error: Unable to retrieve active session");
                 }
             }
-            let (start, end) = utils::current_day_range();
-            display_client_time_summaries(&conn, &start, &end);
+            display_daily_time_summary(&conn);
         }
         Commands::Gui => {
             let _ = gui::main(conn);

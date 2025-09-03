@@ -60,6 +60,11 @@ impl std::fmt::Display for SessionView {
     }
 }
 
+pub fn display_daily_time_summary(conn: &Connection) {
+    let (start, end) = utils::current_day_range();
+    display_client_time_summaries(conn, &start, &end);
+}
+
 pub fn display_client_time_summaries(
     conn: &Connection,
     start: &DateTime<Utc>,
