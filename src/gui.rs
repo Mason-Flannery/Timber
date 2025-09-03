@@ -192,8 +192,7 @@ impl eframe::App for TimberApp {
                                         }
                                     }
                                     Err(e) => {
-                                        self.status_message =
-                                            format!("Failed to query db: {}", e);
+                                        self.status_message = format!("Failed to query db: {}", e);
                                     }
                                 }
                             }
