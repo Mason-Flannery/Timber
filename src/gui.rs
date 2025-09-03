@@ -13,7 +13,7 @@ use eframe::egui;
 use rusqlite::Connection;
 
 struct TimberApp {
-    conn: Connection, // direct DB connection
+    conn: Connection,
     clients: Vec<Client>,
     selected_client: Option<i32>,
     current_session: Option<SessionView>,
@@ -50,7 +50,7 @@ impl Default for TimberApp {
             new_client_name: String::new(),
             status_message: String::new(),
             selected_client: None,        // will set below if clients exist
-            last_refresh: Instant::now(), // Initialize last refresh time
+            last_refresh: Instant::now(),
         };
 
         app.refresh_clients();
