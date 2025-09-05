@@ -155,7 +155,7 @@ fn main() {
                     let view =
                         SessionView::from_session(&conn, session).expect("Unable to open session");
                     let (hours, minutes) =
-                        utils::split_minutes(view.session.get_timedelta().num_minutes() as u32);
+                        utils::split_minutes(view.session.get_timedelta().num_minutes());
                     println!(
                         "Active session: {} ({}h {}m)",
                         view.client_name, hours, minutes

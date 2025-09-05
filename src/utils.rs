@@ -3,7 +3,7 @@ use rusqlite::Connection;
 
 use crate::{cli::UserInput, db};
 
-pub fn split_minutes(total_minutes: u32) -> (u32, u32) {
+pub fn split_minutes(total_minutes: i64) -> (i64, i64) {
     let hours = total_minutes / 60;
     let minutes = total_minutes % 60;
     (hours, minutes)

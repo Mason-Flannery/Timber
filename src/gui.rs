@@ -144,7 +144,7 @@ impl eframe::App for TimberApp {
             match &self.current_session {
                 Some(session) => {
                     let elapsed = session.session.get_timedelta();
-                    let (hours, minutes) = utils::split_minutes(elapsed.num_minutes() as u32);
+                    let (hours, minutes) = utils::split_minutes(elapsed.num_minutes());
 
                     ui.label(format!(
                         "Active session for client {}: {}h {}m",
@@ -224,12 +224,12 @@ impl eframe::App for TimberApp {
                 let client_name = db::get_client_by_id(&self.conn, cid)
                     .map(|c| c.name)
                     .unwrap_or_else(|_| "Unknown".into());
-                let (h, m) = utils::split_minutes(minutes as u32);
+                let (h, m) = utils::split_minutes(minutes);
                 ui.label(format!("{}: {}h {}m", client_name, h, m));
             }
 
             let total_minutes: i64 = totals.values().sum();
-            let (h, m) = utils::split_minutes(total_minutes as u32);
+            let (h, m) = utils::split_minutes(total_minutes);
             ui.label(format!("Total: {}h {}m", h, m));
 
             // Recent sessions

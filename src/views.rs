@@ -40,7 +40,7 @@ impl std::fmt::Display for SessionView {
         };
 
         let (hours, minutes) =
-            utils::split_minutes(self.session.get_timedelta().num_minutes() as u32);
+            utils::split_minutes(self.session.get_timedelta().num_minutes() as i64);
         let duration_str = format!("Duration: {hours}h {minutes}m");
 
         let note_str = match &self.session.note {
@@ -85,7 +85,7 @@ pub fn display_client_time_summaries(
         }
     }
     client_totals.iter().for_each(|(&key, &value)| {
-        let (hours, minutes) = utils::split_minutes(value as u32);
+        let (hours, minutes) = utils::split_minutes(value);
         println!(
             "{}:\n{}h {}m\n",
             db::get_client_by_id(conn, key).unwrap().name,
@@ -94,7 +94,7 @@ pub fn display_client_time_summaries(
         )
     });
 
-    let (hours, minutes) = utils::split_minutes(client_totals.values().sum::<i64>() as u32);
+    let (hours, minutes) = utils::split_minutes(client_totals.values().sum::<i64>());
     println!("Total: {hours}h {minutes}m");
 }
 
